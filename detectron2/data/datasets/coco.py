@@ -8,6 +8,7 @@ import numpy as np
 import os
 import shutil
 import pycocotools.mask as mask_util
+import cv2
 from fvcore.common.timer import Timer
 from iopath.common.file_io import file_lock
 from PIL import Image
@@ -108,6 +109,12 @@ Category ids in annotations are not in [1, #categories]! We'll apply a mapping f
     #  'date_captured': '2013-11-17 05:57:24',
     #  'id': 1268}
     imgs = coco_api.loadImgs(img_ids)
+    # for img in imgs:
+    #     print('img=',img)
+        # cv2.imshow("Image Window", img)
+        # cv2.waitKey(0)  # 等待用户按键，然后继续执行
+        # cv2.destroyAllWindows()  # 关闭所有 OpenCV 创建的窗口
+
     # anns is a list[list[dict]], where each dict is an annotation
     # record for an object. The inner list enumerates the objects in an image
     # and the outer list enumerates over images. Example of anns[0]:

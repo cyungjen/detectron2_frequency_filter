@@ -15,6 +15,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from tabulate import tabulate
 
+import sys
 import detectron2.utils.comm as comm
 from detectron2.config import CfgNode
 from detectron2.data import MetadataCatalog
@@ -23,7 +24,7 @@ from detectron2.structures import Boxes, BoxMode, pairwise_iou
 from detectron2.utils.file_io import PathManager
 from detectron2.utils.logger import create_small_table
 
-from .evaluator import DatasetEvaluator
+from detectron2.evaluation.evaluator import DatasetEvaluator
 
 try:
     from detectron2.evaluation.fast_eval_api import COCOeval_opt
@@ -95,6 +96,7 @@ class COCOEvaluator(DatasetEvaluator):
                 Defaults to True.
         """
         self._logger = logging.getLogger(__name__)
+    
         self._distributed = distributed
         self._output_dir = output_dir
 
