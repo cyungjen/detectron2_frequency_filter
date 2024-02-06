@@ -100,7 +100,7 @@ def pad_to_8_multiple(image):
     return cv2.copyMakeBorder(image, 0, h_pad, 0, w_pad, cv2.BORDER_REPLICATE),h,w
 
 def inverse_zigzag_traversal(one_d_array):
-    """將一維數組按 Zigzag 順序映射回 8x8 塊。"""
+    """將一維數組按 Zigzag 順序映射回 8x8 block。"""
     if len(one_d_array) != 64:
         raise ValueError("數組長度必須為 64")
 
@@ -277,85 +277,99 @@ logging.basicConfig(filename=f'log/qf_bitrate.log', level=logging.INFO,
 folder_path = os.listdir(root_folder_path)
 
 for path in folder_path:
+    if path == 'Traffic_2560x1600_30':
     #decide QF sequence by video size
-    qf_sequence_dict = {
-        'BasketballDrill_832x480_50'   : [3,9,18,33,48],
-        'BQMall_832x480_60'            : [2,6,10,19,32],
-        'PartyScene_832x480_50'        : [2,6,10,19,32],
-        'RaceHorses_832x480_30'        : [6,19,32,50,60],
-        'BasketballDrive_1920x1080_50' : [1,5,10,20,40],
-        'BQTerrace_1920x1080_60'       : [1,5,10,30,40],
-        'Cactus_1920x1080_50'          : [1,5,10,20,40],
-        'ParkScene_1920x1080_24'       : [1,5,10,30,40],
-        'BasketballPass_416x240_50'    : [2,32,46,80,99],
-        'BlowingBubbles_416x240_50'    : [1,10,60,80,99],
-        'BQSquare_416x240_60'          : [2,19,55,80,99],
-        'RaceHorses_416x240_30'        : [6,32,60,80,99],
-        'Traffic_2560x1600_30'         : [1,5,10,20,40]
-    }
-    sequence = qf_sequence_dict[path]
-    
-    images_names = os.listdir(f'{root_folder_path}/{path}/imgs')
-    #find fps
-    folder_cls = path.split('_')
-    fps = folder_cls[2]
+        qf_sequence_dict = {
+            # 'BasketballDrill_832x480_50'   : [3,9,18,33,48],
+            # 'BQMall_832x480_60'            : [2,6,10,19,32],
+            # 'PartyScene_832x480_50'        : [2,6,10,19,32],
+            # 'RaceHorses_832x480_30'        : [6,19,32,50,60],
+            # 'BasketballDrive_1920x1080_50' : [1,5,10,20,40],
+            # 'BQTerrace_1920x1080_60'       : [1,5,10,30,40],
+            # 'Cactus_1920x1080_50'          : [1,5,10,20,40],
+            # 'ParkScene_1920x1080_24'       : [1,5,10,30,40],
+            # 'BasketballPass_416x240_50'    : [2,32,46,80,99],
+            # 'BlowingBubbles_416x240_50'    : [1,10,60,80,99],
+            # 'BQSquare_416x240_60'          : [2,19,55,80,99],
+            # 'RaceHorses_416x240_30'        : [6,32,60,80,99],
+            # 'Traffic_2560x1600_30'         : [1,5,10,20,40]
+            'BasketballDrill_832x480_50'   : [60],
+            'BQMall_832x480_60'            : [40],
+            'PartyScene_832x480_50'        : [40],
+            'RaceHorses_832x480_30'        : [75],
+            'BasketballDrive_1920x1080_50' : [30],
+            'BQTerrace_1920x1080_60'       : [20],
+            'Cactus_1920x1080_50'          : [30],
+            'ParkScene_1920x1080_24'       : [3],
+            'BasketballPass_416x240_50'    : [10],
+            'BlowingBubbles_416x240_50'    : [5],
+            'BQSquare_416x240_60'          : [10],
+            'RaceHorses_416x240_30'        : [15],
+            'Traffic_2560x1600_30'         : [3]
+        }
+        sequence = qf_sequence_dict[path]
+        
+        images_names = os.listdir(f'{root_folder_path}/{path}/imgs')
+        #find fps
+        folder_cls = path.split('_')
+        fps = folder_cls[2]
 
-    #find frame num
-    frame_num_dict = {
-        'Traffic': 33,
-        'ParkScene': 33,
-        'Cactus': 97,
-        'BasketballDrive': 97,
-        'BQTerrace': 129,
-        'BQMall': 129,
-        'PartyScene': 97,
-        'BasketballDrill': 97,
-        'RaceHorses': 65,
-        'BQSquare': 129,
-        'BlowingBubbles': 97,
-        'BasketballPass': 97
-    }
+        #find frame num
+        frame_num_dict = {
+            'Traffic': 33,
+            'ParkScene': 33,
+            'Cactus': 97,
+            'BasketballDrive': 97,
+            'BQTerrace': 129,
+            'BQMall': 129,
+            'PartyScene': 97,
+            'BasketballDrill': 97,
+            'RaceHorses': 65,
+            'BQSquare': 129,
+            'BlowingBubbles': 97,
+            'BasketballPass': 97
+        }
 
-    frame_num = frame_num_dict[folder_cls[0]]
-    # print(fps,frame_num)
-    for qf in sequence:
-        Qtable_Y = np.array([
-            [16, 11, 10, 16, 24, 40, 51, 61],
-            [12, 12, 14, 19, 26, 58, 60, 55],
-            [14, 13, 16, 24, 40, 57, 69, 56],
-            [14, 17, 22, 29, 51, 87, 80, 62],
-            [18, 22, 37, 56, 68, 109, 103, 77],
-            [24, 35, 55, 64, 81, 104, 113, 92],
-            [49, 64, 78, 87, 103, 121, 120, 101],
-            [72, 92, 95, 98, 112, 100, 103, 99]
-        ])
-        Qtable_CbCr = np.array([
-            [1,  18, 24, 47, 99, 99, 99, 99],
-            [1,  21, 26, 66, 99, 99, 99, 99],
-            [2,  26, 56, 99, 99, 99, 99, 99],
-            [4,  66, 99, 99, 99, 99, 99, 99],
-            [9,  99, 99, 99, 99, 99, 99, 99],
-            [9,  99, 99, 99, 99, 99, 99, 99],
-            [9,  99, 99, 99, 99, 99, 99, 99],
-            [9,  99, 99, 99, 99, 99, 99, 99]
-        ])
+        frame_num = frame_num_dict[folder_cls[0]]
+        # print(fps,frame_num)
+        for qf in sequence:
+            Qtable_Y = np.array([
+                [16, 11, 10, 16, 24, 40, 51, 61],
+                [12, 12, 14, 19, 26, 58, 60, 55],
+                [14, 13, 16, 24, 40, 57, 69, 56],
+                [14, 17, 22, 29, 51, 87, 80, 62],
+                [18, 22, 37, 56, 68, 109, 103, 77],
+                [24, 35, 55, 64, 81, 104, 113, 92],
+                [49, 64, 78, 87, 103, 121, 120, 101],
+                [72, 92, 95, 98, 112, 100, 103, 99]
+            ])
+            Qtable_CbCr = np.array([
+                [1,  18, 24, 47, 99, 99, 99, 99],
+                [1,  21, 26, 66, 99, 99, 99, 99],
+                [2,  26, 56, 99, 99, 99, 99, 99],
+                [4,  66, 99, 99, 99, 99, 99, 99],
+                [9,  99, 99, 99, 99, 99, 99, 99],
+                [9,  99, 99, 99, 99, 99, 99, 99],
+                [9,  99, 99, 99, 99, 99, 99, 99],
+                [9,  99, 99, 99, 99, 99, 99, 99]
+            ])
 
-        if qf>=50:
-            Qtable_Y = np.maximum(np.floor((2-qf/50)*Qtable_Y+0.5),1)
-            Qtable_CbCr = np.maximum(np.floor((2-qf/50)*Qtable_CbCr+0.5),1)
-        else:
-            Qtable_Y = np.floor(50/qf*Qtable_Y+0.5)
-            Qtable_CbCr = np.floor(50/qf*Qtable_CbCr+0.5)
+            if qf>=50:
+                Qtable_Y = np.maximum(np.floor((2-qf/50)*Qtable_Y+0.5),1)
+                Qtable_CbCr = np.maximum(np.floor((2-qf/50)*Qtable_CbCr+0.5),1)
+            else:
+                Qtable_Y = np.floor(50/qf*Qtable_Y+0.5)
+                Qtable_CbCr = np.floor(50/qf*Qtable_CbCr+0.5)
 
-        bitcnt_all = 0
-        # 逐個讀取圖像
-        for image_name in images_names:
-            # 讀取完整的文件路徑
-            image_path = os.path.join(f'{root_folder_path}/{path}/imgs', image_name)
-            # 讀取圖像
-            img = cv2.imread(image_path)
-            padded_image,w,h = pad_to_8_multiple(img)
-            bits = process_image_block_F(padded_image,h,w,qf,path,image_name)
+            bitcnt_all = 0
+            # 逐個讀取圖像
+            for image_name in images_names:
+                # 讀取完整的文件路徑
+                image_path = os.path.join(f'{root_folder_path}/{path}/imgs', image_name)
+                # 讀取圖像
+                img = cv2.imread(image_path)
+                padded_image,w,h = pad_to_8_multiple(img)
+                bits = process_image_block_F(padded_image,h,w,qf,path,image_name)
 
-        bitrate = bits/frame_num*int(fps)/1000000
-        logging.info(f'{path} QF={qf} bitrate={bitrate}M')
+            bitrate = bits/frame_num*int(fps)/1000000
+            logging.info(f'{path} QF={qf} bitrate={bitrate}M')

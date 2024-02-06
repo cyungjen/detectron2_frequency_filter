@@ -133,7 +133,7 @@ def array_to_matrix(array, rows = 8, cols = 8):
 
 
 
-def process_image_block_F(img,w,h,qf,folder_name,image_name):
+def process_image_block_F(img,w,h,qf,folder_name,writeimg):
     """
     Image preprocess. dct -> frequency filter -> Quantize -> triplets 
     -> huffman -> run length coding -> decoding...
@@ -241,9 +241,9 @@ def process_image_block_F(img,w,h,qf,folder_name,image_name):
     img_reconstructed = np.clip(img_reconstructed, 0, 255)
     img_reconstructed = img_reconstructed.astype(np.uint8)
     img_reconstructed = cv2.cvtColor(img_reconstructed, cv2.COLOR_YUV2BGR)
-    if not os.path.exists(f"filtered_images_triplet/{folder_name}/{folder_name}_img_{qf}"):
-        os.makedirs(f"filtered_images_triplet/{folder_name}/{folder_name}_img_{qf}")
-    cv2.imwrite(f"filtered_images_triplet/{folder_name}/{folder_name}_img_{qf}/{image_name}", img_reconstructed)
+    if writeimg == 1:
+        cv2.imwrite(f"image/{folder_name}_img_{qf}.png", img_reconstructed)
+    writeimg = 0
     return bitcnt_all
 
 
@@ -252,33 +252,22 @@ np.set_printoptions(threshold=np.inf)
 This file is for QF-bitrate test
 Chose a dataset you wanna test 
 '''
-root_folder_path = 'datasets/source_images'
-logging.basicConfig(filename=f'log/qf_bitrate.log', level=logging.INFO, 
+root_folder_path = 'image_416x240'
+logging.basicConfig(filename=f'log/{root_folder_path}.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-
+#decide QF sequence by video size
+qf_sequence_dict = {
+    'image_416x240'  : [2,6,10,19,32,50,60,80,99],
+    'image_832x480'  : [2,6,10,19,32,50,60],
+    'Image_1920x1080': [0.1,1,2,5,10,20,30,40],
+    'image_2560x1600': [0.1,1,2,5,10,20,30,40]
+}
+sequence = qf_sequence_dict[root_folder_path]
 
 folder_path = os.listdir(root_folder_path)
 
 for path in folder_path:
-    #decide QF sequence by video size
-    qf_sequence_dict = {
-        'BasketballDrill_832x480_50'   : [3,9,18,33,48],
-        'BQMall_832x480_60'            : [2,6,10,19,32],
-        'PartyScene_832x480_50'        : [2,6,10,19,32],
-        'RaceHorses_832x480_30'        : [6,19,32,50,60],
-        'BasketballDrive_1920x1080_50' : [1,5,10,20,40],
-        'BQTerrace_1920x1080_60'       : [1,5,10,30,40],
-        'Cactus_1920x1080_50'          : [1,5,10,20,40],
-        'ParkScene_1920x1080_24'       : [1,5,10,30,40],
-        'BasketballPass_416x240_50'    : [2,32,46,80,99],
-        'BlowingBubbles_416x240_50'    : [1,10,60,80,99],
-        'BQSquare_416x240_60'          : [2,19,55,80,99],
-        'RaceHorses_416x240_30'        : [6,32,60,80,99],
-        'Traffic_2560x1600_30'         : [1,5,10,20,40]
-    }
-    sequence = qf_sequence_dict[path]
-    
     images_names = os.listdir(f'{root_folder_path}/{path}/imgs')
     #find fps
     folder_cls = path.split('_')
@@ -330,6 +319,7 @@ for path in folder_path:
             Qtable_Y = np.floor(50/qf*Qtable_Y+0.5)
             Qtable_CbCr = np.floor(50/qf*Qtable_CbCr+0.5)
 
+        writeimg = 1
         bitcnt_all = 0
         # 逐個讀取圖像
         for image_name in images_names:
@@ -338,7 +328,8 @@ for path in folder_path:
             # 讀取圖像
             img = cv2.imread(image_path)
             padded_image,w,h = pad_to_8_multiple(img)
-            bits = process_image_block_F(padded_image,h,w,qf,path,image_name)
+            bits = process_image_block_F(padded_image,h,w,qf,path,writeimg)
+            writeimg = 0
         print('bits=',bits)
         bitrate = bits/frame_num*int(fps)/1000000
         logging.info(f'{path} QP={qf} bitrate={bitrate}M')
